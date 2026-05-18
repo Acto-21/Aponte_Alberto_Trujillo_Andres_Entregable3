@@ -1,0 +1,10 @@
+Juan;Programador;20
+Maria;Diseñador;25
+Carlos;Programador;15
+Ana;Analista;30
+Pedro;Diseñador;18
+Luisa;Analista;22
+Sofia;Programador;35
+Miguel;Administrador;28
+Valentina;Diseñador;40
+Diego;Administrador;20
