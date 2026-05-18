@@ -57,3 +57,106 @@ def leer_clientes(ruta):
         return clientes
 
     return clientes
+
+class Nodo:
+    def __init__(self, dato):
+        self.dato = dato
+        self.adyacentes = {}
+
+    def agregar_arista(self, destino, capacidad):
+        self.adyacentes[destino] = capacidad
+
+    def __str__(self):
+        return f"Nodo({self.dato})"
+
+
+class Grafo:
+    def __init__(self):
+        self.nodos = {}
+
+    def agregar_nodo(self, dato):
+        if dato not in self.nodos:
+            self.nodos[dato] = Nodo(dato)
+
+    def agregar_arista(self, origen, destino, capacidad):
+        # Crear nodos si no existen
+        self.agregar_nodo(origen)
+        self.agregar_nodo(destino)
+
+        # Arista normal
+        self.nodos[origen].agregar_arista(destino, capacidad)
+
+        # Arista residual inversa
+        if origen not in self.nodos[destino].adyacentes:
+            self.nodos[destino].agregar_arista(origen, 0)
+
+
+    def mostrar_grafo(self):
+        for nombre, nodo in self.nodos.items():
+            print(f"\n{nombre}:")
+            for vecino, capacidad in nodo.adyacentes.items():
+                print(f"  -> {vecino} | capacidad = {capacidad}")
+
+    def bfs(self, fuente, sumidero, padres):
+    
+        #Retorna True si existe un camino desde fuente hasta sumidero.
+
+        visitados = set()
+        cola = []
+
+        cola.append(fuente)
+        visitados.add(fuente)
+
+        while cola:
+            actual = cola.pop(0)
+
+            for vecino, capacidad in self.nodos[actual].adyacentes.items():
+
+                # Solo visitar si tiene capacidad disponible
+                if vecino not in visitados and capacidad > 0:
+
+                    cola.append(vecino)
+                    visitados.add(vecino)
+
+                    # Guardar el padre para reconstruir el camino
+                    padres[vecino] = actual
+
+                    # Si llegamos al sumidero
+                    if vecino == sumidero:
+                        return True
+
+        return False
+    
+def main():
+
+    #Cargar los datos
+    lista_empleados = leer_empleados("datos_de_entrada/empleados.txt")
+    lista_clientes = leer_clientes("datos_de_entrada/clientes.txt")
+    
+    if not lista_empleados or not lista_clientes:
+        print("No se puede proceder sin datos válidos en ambos archivos.")
+        exit()
+    
+
+    # 2. Construir el Grafo Residual
+    grafo = Grafo()
+    FUENTE = "PROV_FUENTE"
+    SUMIDERO = "PROV_SUMIDERO"
+    # Para evitar colisiones si un cliente y empleado se llaman igual, usamos prefijos
+    for cliente in lista_clientes:
+        id_cliente = f"C:{cliente['nombre']}"
+        grafo.agregar_arista(FUENTE, id_cliente, 1) # Fuente a Cliente
+        
+        for empleado in lista_empleados:
+            id_empleado = f"E:{empleado['nombre']}"
+            
+            # Condición de emparejamiento: misma ocupación y presupuesto >= precio por hora
+            if cliente['ocupacion'] == empleado['ocupacion'] and cliente['precio'] >= empleado['precio']:
+                grafo.agregar_arista(id_cliente, id_empleado, 1) # Cliente a Empleado
+
+    for empleado in lista_empleados:
+        id_empleado = f"E:{empleado['nombre']}"
+        grafo.agregar_arista(id_empleado, SUMIDERO, 1) # Empleado a Sumidero
+    grafo.mostrar_grafo()
+
+main()
