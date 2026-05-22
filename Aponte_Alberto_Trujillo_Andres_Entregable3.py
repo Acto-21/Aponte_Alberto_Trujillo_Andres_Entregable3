@@ -126,6 +126,50 @@ class Grafo:
                         return True
 
         return False
+    def ford_fulkerson(self, fuente, sumidero):
+        flujo_total = 0
+ 
+        while True:
+            # Diccionario para guardar el camino encontrado por BFS
+            padres = {}
+            if not self.bfs(fuente, sumidero, padres):
+                break
+ 
+            flujo_camino = float('inf')
+            nodo_actual = sumidero
+ 
+            while nodo_actual != fuente:
+                padre = padres[nodo_actual]
+                capacidad = self.nodos[padre].adyacentes[nodo_actual]
+                flujo_camino = min(flujo_camino, capacidad)
+                nodo_actual = padre
+ 
+            nodo_actual = sumidero
+            while nodo_actual != fuente:
+                padre = padres[nodo_actual]
+                self.nodos[padre].adyacentes[nodo_actual] -= flujo_camino
+                self.nodos[nodo_actual].adyacentes[padre] += flujo_camino
+                nodo_actual = padre
+ 
+            flujo_total += flujo_camino
+        return flujo_total
+ 
+    
+def obtener_emparejamientos(grafo, lista_clientes):
+    # Si las aristas que van de cliente a empleado tienen capacidad 0, significa que el flujo pasó por esa arista
+    emparejamientos = []
+
+    for cliente in lista_clientes:
+        id_cliente = f"C:{cliente['nombre']}"
+
+        for vecino, capacidad in grafo.nodos[id_cliente].adyacentes.items():
+            if vecino.startswith("E:") and capacidad == 0:
+                if grafo.nodos[vecino].adyacentes.get(id_cliente, 0) == 1:
+                    nombre_empleado = vecino[2:]
+                    nombre_cliente = cliente['nombre']
+                    emparejamientos.append((nombre_cliente, nombre_empleado))
+
+    return emparejamientos
     
 def main():
 
@@ -158,5 +202,18 @@ def main():
         id_empleado = f"E:{empleado['nombre']}"
         grafo.agregar_arista(id_empleado, SUMIDERO, 1) # Empleado a Sumidero
     grafo.mostrar_grafo()
+
+    # 3. Se ejecuta Ford-Fulkerson para encontrar el flujo máximo (numero total de emparejamientos máximos)
+    print("\n--- Ford-Fulkerson ---")
+    total = grafo.ford_fulkerson(FUENTE, SUMIDERO)
+ 
+    # 4. Se sacan los emparejamientos del grafo residual y se muestran
+    emparejamientos = obtener_emparejamientos(grafo, lista_clientes)
+ 
+    print("\nEmparejamientos encontrados: ")
+    for cliente, empleado in emparejamientos:
+        print(f"{cliente} - {empleado}")
+ 
+    print(f"\nTotal de emparejamientos: {total}")
 
 main()
